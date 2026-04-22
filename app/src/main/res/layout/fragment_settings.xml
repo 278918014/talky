@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/talky_page_bg"
+    android:fillViewport="true"
+    android:padding="20dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_horizontal"
+        android:orientation="vertical">
+
+        <TextView
+            style="@style/TalkyHeaderTitle"
+            android:gravity="center"
+            android:text="我的设置" />
+
+        <TextView
+            style="@style/TalkyHeaderSubtitle"
+            android:gravity="center"
+            android:text="本地、私密、轻量的口播练习工具" />
+
+        <include layout="@layout/view_setting_card" android:id="@+id/setting_resolution" />
+        <include layout="@layout/view_setting_card" android:id="@+id/setting_storage" />
+        <include layout="@layout/view_setting_card" android:id="@+id/setting_practice" />
+        <include layout="@layout/view_setting_card" android:id="@+id/setting_cache" />
+        <include layout="@layout/view_setting_card" android:id="@+id/setting_help" />
+        <include layout="@layout/view_setting_card" android:id="@+id/setting_about" />
+
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="14dp"
+            app:cardBackgroundColor="@color/talky_warm_surface"
+            app:cardCornerRadius="24dp"
+            app:cardElevation="0dp"
+            app:strokeColor="@color/talky_border"
+            app:strokeWidth="1dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <TextView
+                    style="@style/TalkySectionTitle"
+                    android:text="隐私说明" />
+
+                <TextView
+                    style="@style/TalkyBody.Small"
+                    android:layout_marginTop="10dp"
+                    android:text="所有视频与设置均保存在本地，不上传云端。" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+    </LinearLayout>
+</androidx.core.widget.NestedScrollView>

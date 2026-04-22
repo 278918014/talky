@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Talky</string>
+    <string name="dashboard_today_count">今天已练习 %1$d 次</string>
+    <string name="dashboard_total_count">累计录制 %1$d 条</string>
+    <string name="dashboard_latest_label">最近练习 %1$s</string>
+
+    <!-- 新增 -->
+    <string name="recording_pause">暂停</string>
+    <string name="recording_resume">继续</string>
+    <string name="recording_stop">停止并保存</string>
+    <string name="camera_switch">切镜头</string>
+    <string name="camera_settings">设置</string>
+    <string name="date_filter_hint">按日期查找</string>
+    <string name="clear_filter">清除筛选</string>
+    <string name="empty_history">还没有练习记录</string>
+    <string name="empty_history_hint">去首页开始一段口播练习吧</string>
+    <string name="playback_speed">播放速度</string>
+    <string name="share">分享</string>
+    <string name="delete">删除</string>
+    <string name="delete_confirm_title">删除视频</string>
+    <string name="delete_confirm_message">确定要删除这条练习记录吗？此操作无法撤销。</string>
+    <string name="start_recording">开始录制</string>
+    <string name="video_saved">视频已保存</string>
+    <string name="settings_resolution">默认录制分辨率</string>
+    <string name="settings_storage">视频存储位置</string>
+    <string name="settings_practice_mode">练习模式</string>
+    <string name="settings_cache">清理缩略图缓存</string>
+    <string name="settings_help">帮助中心</string>
+    <string name="settings_about">关于我们</string>
+    <string name="privacy_notice">隐私说明</string>
+    <string name="privacy_message">所有视频与设置均保存在本地，不上传云端。</string>
+</resources>

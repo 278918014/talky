@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="talky_page_bg">#FFF8F0</color>
+    <color name="talky_surface">#FFFDF9</color>
+    <color name="talky_warm_surface">#FFF2E1</color>
+    <color name="talky_primary">#F3873C</color>
+    <color name="talky_primary_deep">#D85B2E</color>
+    <color name="talky_primary_soft">#FFE5CC</color>
+    <color name="talky_border">#F3D7BF</color>
+    <color name="talky_text">#443129</color>
+    <color name="talky_subtext">#8C6B58</color>
+    <color name="talky_recording_dark">#9B5C37</color>
+    <color name="talky_recording_light">#FFD279</color>
+    <color name="talky_video_placeholder">#2A3347</color>
+    <color name="talky_coral">#EE7160</color>
+    <color name="talky_cream">#FFF5EA</color>
+    <color name="bottom_nav_active">#F3873C</color>
+    <color name="bottom_nav_inactive">#8C6B58</color>
+</resources>

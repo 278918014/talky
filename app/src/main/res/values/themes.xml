@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <style name="Theme.Talky" parent="Theme.Material3.Light.NoActionBar">
+        <item name="colorPrimary">@color/talky_primary</item>
+        <item name="colorOnPrimary">@color/talky_surface</item>
+        <item name="colorSecondary">@color/talky_primary_deep</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowBackground">@color/talky_page_bg</item>
+        <item name="materialButtonStyle">@style/Widget.Talky.PrimaryButton</item>
+        <item name="textInputStyle">@style/Widget.Talky.TextInputLayout</item>
+    </style>
+
+    <style name="TalkyHeaderTitle">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:textColor">@color/talky_text</item>
+        <item name="android:textSize">28sp</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <style name="TalkyHeaderSubtitle">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:textColor">@color/talky_subtext</item>
+        <item name="android:textSize">12sp</item>
+    </style>
+
+    <style name="TalkySectionTitle">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:textColor">@color/talky_text</item>
+        <item name="android:textSize">18sp</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <style name="TalkyBody">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:textColor">@color/talky_subtext</item>
+        <item name="android:textSize">15sp</item>
+        <item name="android:lineSpacingExtra">4dp</item>
+    </style>
+
+    <style name="TalkyBody.Small" parent="TalkyBody">
+        <item name="android:textSize">12sp</item>
+        <item name="android:lineSpacingExtra">2dp</item>
+    </style>
+
+    <style name="TalkyInfoChip">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:background">@drawable/bg_info_chip</item>
+        <item name="android:paddingHorizontal">12dp</item>
+        <item name="android:paddingVertical">6dp</item>
+        <item name="android:textColor">@color/talky_primary_deep</item>
+        <item name="android:textSize">12sp</item>
+    </style>
+
+    <style name="TalkyToolbarTitle">
+        <item name="android:textColor">@color/talky_text</item>
+        <item name="android:textSize">22sp</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <style name="TalkyRecChip">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">32dp</item>
+        <item name="android:background">@drawable/bg_rec_chip</item>
+        <item name="android:gravity">center</item>
+        <item name="android:paddingHorizontal">14dp</item>
+        <item name="android:textColor">@color/talky_surface</item>
+        <item name="android:textSize">12sp</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <style name="TalkyHeaderChip">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">32dp</item>
+        <item name="android:background">@drawable/bg_header_chip</item>
+        <item name="android:gravity">center</item>
+        <item name="android:paddingHorizontal">12dp</item>
+        <item name="android:textColor">@color/talky_primary_deep</item>
+        <item name="android:textSize">12sp</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <style name="TalkyHeaderChip.Light" parent="TalkyHeaderChip">
+        <item name="android:background">@drawable/bg_header_chip_light</item>
+        <item name="android:textColor">@color/talky_text</item>
+        <item name="android:textStyle">normal</item>
+    </style>
+
+    <style name="TalkyMiniChip">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:background">@drawable/bg_mini_chip</item>
+        <item name="android:paddingHorizontal">12dp</item>
+        <item name="android:paddingVertical">8dp</item>
+        <item name="android:textColor">@color/talky_subtext</item>
+        <item name="android:textSize">12sp</item>
+    </style>
+
+    <style name="TalkyMiniChip.Highlight" parent="TalkyMiniChip">
+        <item name="android:background">@drawable/bg_mini_chip_highlight</item>
+        <item name="android:textColor">@color/bottom_nav_active</item>
+    </style>
+
+    <style name="TalkyMiniChip.Danger" parent="TalkyMiniChip">
+        <item name="android:background">@drawable/bg_mini_chip_danger</item>
+        <item name="android:textColor">@color/talky_surface</item>
+    </style>
+
+    <style name="Widget.Talky.PrimaryButton" parent="Widget.Material3.Button">
+        <item name="backgroundTint">@color/talky_primary</item>
+        <item name="cornerRadius">18dp</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textColor">@color/talky_surface</item>
+        <item name="android:paddingHorizontal">18dp</item>
+        <item name="android:minHeight">46dp</item>
+        <item name="strokeWidth">0dp</item>
+    </style>
+
+    <style name="Widget.Talky.SecondaryButton" parent="Widget.Material3.Button">
+        <item name="backgroundTint">@color/talky_primary_soft</item>
+        <item name="cornerRadius">18dp</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textColor">@color/talky_primary_deep</item>
+        <item name="android:paddingHorizontal">18dp</item>
+        <item name="android:minHeight">46dp</item>
+        <item name="strokeWidth">0dp</item>
+    </style>
+
+    <style name="Widget.Talky.DangerButton" parent="Widget.Talky.PrimaryButton">
+        <item name="backgroundTint">@color/talky_coral</item>
+    </style>
+
+    <style name="Widget.Talky.TextInputLayout" parent="Widget.Material3.TextInputLayout.OutlinedBox">
+        <item name="boxBackgroundColor">@color/talky_surface</item>
+        <item name="boxCornerRadiusTopStart">18dp</item>
+        <item name="boxCornerRadiusTopEnd">18dp</item>
+        <item name="boxCornerRadiusBottomStart">18dp</item>
+        <item name="boxCornerRadiusBottomEnd">18dp</item>
+        <item name="boxStrokeColor">@color/talky_border</item>
+        <item name="hintTextColor">@color/talky_subtext</item>
+    </style>
+
+    <style name="Widget.Talky.CategoryChip" parent="Widget.Material3.Chip.Assist">
+        <item name="chipBackgroundColor">@color/category_chip_background_color</item>
+        <item name="chipStrokeWidth">0dp</item>
+        <item name="chipCornerRadius">16dp</item>
+        <item name="android:textColor">@color/category_chip_text_color</item>
+        <item name="android:textSize">12sp</item>
+        <item name="android:minHeight">32dp</item>
+    </style>
+</resources>

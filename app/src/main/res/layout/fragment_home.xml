@@ -1,0 +1,198 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true"
+    android:paddingHorizontal="16dp"
+    android:paddingTop="20dp"
+    android:paddingBottom="24dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_horizontal"
+        android:orientation="vertical">
+
+        <!-- 标题区 -->
+        <TextView
+            style="@style/TalkyHeaderTitle"
+            android:gravity="center"
+            android:text="首页" />
+
+        <TextView
+            style="@style/TalkyHeaderSubtitle"
+            android:gravity="center"
+            android:text="本地、私密、轻量的口播练习工具" />
+
+        <!-- Hero 区域：开始录制 -->
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            app:cardBackgroundColor="@color/talky_warm_surface"
+            app:cardCornerRadius="28dp"
+            app:cardElevation="0dp"
+            app:strokeColor="@color/talky_border"
+            app:strokeWidth="1dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_hero_card"
+                android:orientation="vertical"
+                android:padding="18dp">
+
+                <TextView
+                    android:id="@+id/today_count"
+                    style="@style/TalkyInfoChip"
+                    android:text="今天已练习 0 次" />
+
+                <TextView
+                    style="@style/TalkySectionTitle"
+                    android:layout_marginTop="14dp"
+                    android:text="开始一段新的口播练习" />
+
+                <TextView
+                    style="@style/TalkyBody"
+                    android:layout_marginTop="8dp"
+                    android:text="打开就能录，不上传云端，练完自动归档到历史记录。" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/start_recording_button"
+                    style="@style/Widget.Talky.PrimaryButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="18dp"
+                    android:text="开始录制" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/history_card"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            app:cardBackgroundColor="@color/talky_surface"
+            app:cardCornerRadius="24dp"
+            app:cardElevation="0dp"
+            app:strokeColor="@color/talky_border"
+            app:strokeWidth="1dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <TextView
+                    style="@style/TalkySectionTitle"
+                    android:text="历史练习" />
+
+                <TextView
+                    style="@style/TalkyBody.Small"
+                    android:layout_marginTop="6dp"
+                    android:text="按日期查看所有练习视频" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- 统计卡片 -->
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            app:cardBackgroundColor="@color/talky_surface"
+            app:cardCornerRadius="24dp"
+            app:cardElevation="0dp"
+            app:strokeColor="@color/talky_border"
+            app:strokeWidth="1dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <TextView
+                    style="@style/TalkySectionTitle"
+                    android:text="练习统计" />
+
+                <!-- 三列统计 -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="14dp"
+                    android:orientation="horizontal">
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:paddingEnd="8dp"
+                        android:orientation="vertical">
+
+                        <TextView
+                            style="@style/TalkyBody.Small"
+                            android:text="今日录制"
+                            android:textColor="@color/talky_subtext" />
+
+                        <TextView
+                            android:id="@+id/today_count_label"
+                            style="@style/TalkySectionTitle"
+                            android:layout_width="match_parent"
+                            android:layout_marginTop="4dp"
+                            android:maxLines="2"
+                            android:text="0"
+                            android:textSize="24sp" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:paddingHorizontal="4dp"
+                        android:orientation="vertical">
+
+                        <TextView
+                            style="@style/TalkyBody.Small"
+                            android:text="累计录制"
+                            android:textColor="@color/talky_subtext" />
+
+                        <TextView
+                            android:id="@+id/total_count"
+                            style="@style/TalkySectionTitle"
+                            android:layout_width="match_parent"
+                            android:layout_marginTop="4dp"
+                            android:maxLines="2"
+                            android:text="0"
+                            android:textSize="24sp" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:paddingStart="8dp"
+                        android:orientation="vertical">
+
+                        <TextView
+                            style="@style/TalkyBody.Small"
+                            android:text="最近练习"
+                            android:textColor="@color/talky_subtext" />
+
+                        <TextView
+                            android:id="@+id/latest_label"
+                            style="@style/TalkySectionTitle"
+                            android:layout_width="match_parent"
+                            android:layout_marginTop="4dp"
+                            android:lineSpacingExtra="2dp"
+                            android:maxLines="2"
+                            android:text="暂无记录"
+                            android:textSize="16sp" />
+                    </LinearLayout>
+                </LinearLayout>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+    </LinearLayout>
+</androidx.core.widget.NestedScrollView>

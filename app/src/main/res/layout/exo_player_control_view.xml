@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="#80000000"
+    android:gravity="center"
+    android:orientation="vertical"
+    android:paddingVertical="8dp">
+
+    <!-- 进度条 -->
+    <androidx.media3.ui.DefaultTimeBar
+        android:id="@id/exo_progress"
+        android:layout_width="match_parent"
+        android:layout_height="26dp"
+        android:layout_marginHorizontal="8dp" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingHorizontal="12dp">
+
+        <!-- 当前时间 -->
+        <TextView
+            android:id="@id/exo_position"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/talky_surface"
+            android:textSize="12sp" />
+
+        <View
+            android:layout_width="0dp"
+            android:layout_height="1dp"
+            android:layout_weight="1" />
+
+        <!-- 快退 -->
+        <ImageButton
+            android:id="@id/exo_rew"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="快退10秒"
+            android:scaleType="centerInside"
+            android:src="@android:drawable/ic_media_rew" />
+
+        <!-- 播放/暂停 -->
+        <ImageButton
+            android:id="@id/exo_play_pause"
+            android:layout_width="52dp"
+            android:layout_height="52dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="播放/暂停"
+            android:scaleType="centerInside" />
+
+        <!-- 快进 -->
+        <ImageButton
+            android:id="@id/exo_ffwd"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="快进10秒"
+            android:scaleType="centerInside"
+            android:src="@android:drawable/ic_media_ff" />
+
+        <View
+            android:layout_width="0dp"
+            android:layout_height="1dp"
+            android:layout_weight="1" />
+
+        <!-- 总时长 -->
+        <TextView
+            android:id="@id/exo_duration"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/talky_surface"
+            android:textSize="12sp" />
+    </LinearLayout>
+</LinearLayout>
