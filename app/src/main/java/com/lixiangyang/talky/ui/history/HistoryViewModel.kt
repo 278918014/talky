@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import java.util.Calendar
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -26,6 +27,23 @@ class HistoryViewModel(
     private val dateFilterFlow = MutableStateFlow<Long?>(null)
 
     val practices = repository.observePractices().asLiveData()
+
+    val availableDateOptions: LiveData<List<DateFilterOption>> =
+        repository.observePractices()
+            .map { practices ->
+                val displayFormatter = SimpleDateFormat("yyyy年MM月dd日", Locale.getDefault())
+                practices
+                    .groupBy { getDayStart(it.recordedAt) }
+                    .map { (dayStart, items) ->
+                        DateFilterOption(
+                            dayStart = dayStart,
+                            label = displayFormatter.format(Date(dayStart)),
+                            count = items.size
+                        )
+                    }
+                    .sortedByDescending { it.dayStart }
+            }
+            .asLiveData()
 
     val groupedPractices: LiveData<List<Pair<String, List<VideoPractice>>>> =
         combine(
@@ -62,9 +80,13 @@ class HistoryViewModel(
     }
 
     private fun getDayStart(millis: Long): Long {
-        val formatter = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-        val dateStr = formatter.format(Date(millis))
-        return formatter.parse(dateStr)?.time ?: millis
+        return Calendar.getInstance().apply {
+            timeInMillis = millis
+            set(Calendar.HOUR_OF_DAY, 0)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }.timeInMillis
     }
 
     private fun formatDisplayDate(dateKey: String): String {
@@ -84,4 +106,10 @@ class HistoryViewModel(
             override fun <T : ViewModel> create(modelClass: Class<T>): T = HistoryViewModel(repository) as T
         }
     }
+
+    data class DateFilterOption(
+        val dayStart: Long,
+        val label: String,
+        val count: Int
+    )
 }

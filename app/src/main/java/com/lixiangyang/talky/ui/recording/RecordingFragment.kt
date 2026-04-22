@@ -17,6 +17,7 @@ import androidx.camera.core.CameraSelector
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.video.MediaStoreOutputOptions
+import androidx.camera.video.FallbackStrategy
 import androidx.camera.video.Quality
 import androidx.camera.video.QualitySelector
 import androidx.camera.video.Recorder
@@ -27,6 +28,7 @@ import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import com.google.android.material.snackbar.Snackbar
+import com.lixiangyang.talky.core.AppSettings
 import com.lixiangyang.talky.databinding.FragmentRecordingBinding
 import com.lixiangyang.talky.ui.common.VideoThumbnailLoader
 import com.lixiangyang.talky.ui.common.container
@@ -211,8 +213,15 @@ class RecordingFragment : Fragment() {
                 it.setSurfaceProvider(binding.previewView.surfaceProvider)
             }
 
+            val selectedResolution = AppSettings.getResolution(requireContext())
+            val selectedQuality = selectedResolution.toCameraQuality()
             val recorder = Recorder.Builder()
-                .setQualitySelector(QualitySelector.from(Quality.HD))
+                .setQualitySelector(
+                    QualitySelector.from(
+                        selectedQuality,
+                        FallbackStrategy.lowerQualityOrHigherThan(selectedQuality)
+                    )
+                )
                 .build()
             videoCapture = VideoCapture.withOutput(recorder)
 
@@ -234,6 +243,14 @@ class RecordingFragment : Fragment() {
                 Snackbar.make(binding.root, "相机启动失败：${e.message}", Snackbar.LENGTH_SHORT).show()
             }
         }, ContextCompat.getMainExecutor(requireContext()))
+    }
+
+    private fun AppSettings.ResolutionOption.toCameraQuality(): Quality {
+        return when (key) {
+            "sd" -> Quality.SD
+            "fhd" -> Quality.FHD
+            else -> Quality.HD
+        }
     }
 
     private fun startRecording() {
@@ -351,7 +368,7 @@ class RecordingFragment : Fragment() {
                                 viewModel.savePractice(
                                     title = name.removeSuffix(".mp4"),
                                     durationSeconds = elapsedSeconds,
-                                    resolution = "720P",
+                                    resolution = AppSettings.getResolution(requireContext()).recordingLabel,
                                     filePath = outputUri.toString(),
                                     thumbnailPath = thumbnailPath
                                 )

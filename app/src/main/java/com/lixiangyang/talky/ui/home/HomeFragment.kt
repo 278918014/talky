@@ -39,11 +39,6 @@ class HomeFragment : Fragment() {
             // Stats card: keep values short so they stay readable on small screens.
             binding.todayCountLabel.text = summary.todayCount.toString()
             binding.totalCount.text = summary.totalCount.toString()
-            binding.latestLabel.text = summary.latestPracticeLabel
-                .takeIf { it.contains(" ") }
-                ?.split(" ", limit = 2)
-                ?.joinToString("\n")
-                ?: "暂无\n记录"
         }
 
         binding.startRecordingButton.setOnClickListener {
@@ -51,6 +46,14 @@ class HomeFragment : Fragment() {
         }
 
         binding.historyCard.setOnClickListener {
+            startActivity(HistoryActivity.createIntent(requireContext()))
+        }
+
+        binding.todayStatsItem.setOnClickListener {
+            startActivity(HistoryActivity.createIntent(requireContext()))
+        }
+
+        binding.totalStatsItem.setOnClickListener {
             startActivity(HistoryActivity.createIntent(requireContext()))
         }
     }
