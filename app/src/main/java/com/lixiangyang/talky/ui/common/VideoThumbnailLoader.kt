@@ -51,6 +51,15 @@ object VideoThumbnailLoader {
         return target.absolutePath
     }
 
+    fun clearCache(context: Context): Int {
+        memoryCache.evictAll()
+        val thumbnailDir = File(context.cacheDir, "video_thumbnails")
+        return thumbnailDir
+            .listFiles()
+            ?.count { file -> file.delete() }
+            ?: 0
+    }
+
     private fun loadBitmap(context: Context, videoPath: String, thumbnailPath: String): Bitmap? {
         if (thumbnailPath.isNotBlank()) {
             val stored = decodeStoredThumbnail(thumbnailPath)

@@ -15,6 +15,7 @@ import com.google.android.material.snackbar.Snackbar
 import com.lixiangyang.talky.R
 import com.lixiangyang.talky.core.AppSettings
 import com.lixiangyang.talky.databinding.FragmentSettingsBinding
+import com.lixiangyang.talky.ui.common.VideoThumbnailLoader
 import java.io.File
 
 class SettingsFragment : Fragment() {
@@ -261,7 +262,8 @@ class SettingsFragment : Fragment() {
             .setTitle(getString(R.string.settings_cache))
             .setMessage("确定要清理所有缩略图缓存吗？")
             .setPositiveButton("清理") { _, _ ->
-                Snackbar.make(binding.root, "缓存已清理", Snackbar.LENGTH_SHORT).show()
+                val deletedCount = VideoThumbnailLoader.clearCache(requireContext())
+                Snackbar.make(binding.root, "缓存已清理，删除 $deletedCount 个缩略图", Snackbar.LENGTH_SHORT).show()
             }
             .setNegativeButton("取消", null)
             .show()

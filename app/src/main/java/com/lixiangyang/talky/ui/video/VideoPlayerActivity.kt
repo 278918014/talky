@@ -1,5 +1,6 @@
 package com.lixiangyang.talky.ui.video
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.graphics.Color
@@ -26,6 +27,7 @@ import java.util.Date
 import java.util.Formatter
 import java.util.Locale
 
+@SuppressLint("UnsafeOptInUsageError")
 class VideoPlayerActivity : AppCompatActivity() {
     companion object {
         private const val EXTRA_PRACTICE_ID = "extra_practice_id"

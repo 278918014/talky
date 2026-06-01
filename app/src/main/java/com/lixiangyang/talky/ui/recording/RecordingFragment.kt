@@ -4,6 +4,7 @@ import android.Manifest
 import android.content.ContentValues
 import android.os.Build
 import android.os.Bundle
+import android.os.Environment
 import android.os.Handler
 import android.os.Looper
 import android.provider.MediaStore
@@ -27,12 +28,14 @@ import androidx.camera.video.VideoRecordEvent
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
 import com.lixiangyang.talky.core.AppSettings
 import com.lixiangyang.talky.databinding.FragmentRecordingBinding
 import com.lixiangyang.talky.ui.common.VideoThumbnailLoader
 import com.lixiangyang.talky.ui.common.container
 import com.lixiangyang.talky.ui.history.HistoryActivity
+import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.concurrent.ExecutorService
@@ -74,6 +77,8 @@ class RecordingFragment : Fragment() {
     private var isRecordingStarted = false
 
     private var isPaused = false
+    private var shouldSaveCurrentRecording = true
+    private var finishAfterFinalize = false
 
     // Permission
     private val permissionLauncher = registerForActivityResult(
@@ -131,7 +136,7 @@ class RecordingFragment : Fragment() {
         binding.stopButton.isEnabled = false
 
         binding.backButton.setOnClickListener {
-            if (isRecording) {
+            if (recording != null || isRecordingStarted) {
                 stopRecording(save = false)
             } else {
                 requireActivity().finish()
@@ -148,7 +153,7 @@ class RecordingFragment : Fragment() {
         }
 
         binding.settingsButton.setOnClickListener {
-            Snackbar.make(binding.root, "录制设置暂未开放", Snackbar.LENGTH_SHORT).show()
+            showRecordingSettingsDialog()
         }
 
         binding.pauseButton.setOnClickListener {
@@ -166,6 +171,64 @@ class RecordingFragment : Fragment() {
             stopRecording(save = true)
         }
 
+    }
+
+    private fun showRecordingSettingsDialog() {
+        val resolution = AppSettings.getResolution(requireContext()).label
+        val storagePath = getVideoStoragePath()
+        val options = arrayOf(
+            "默认录制分辨率\n$resolution",
+            "视频保存位置\n$storagePath"
+        )
+
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle("录制设置")
+            .setItems(options) { _, which ->
+                when (which) {
+                    0 -> showResolutionDialog()
+                    1 -> showStoragePathDialog(storagePath)
+                }
+            }
+            .setNegativeButton("取消", null)
+            .show()
+    }
+
+    private fun showResolutionDialog() {
+        if (isRecordingStarted || isStartingRecording || recording != null) {
+            Snackbar.make(binding.root, "录制中不能修改分辨率，请先停止当前录制", Snackbar.LENGTH_SHORT).show()
+            return
+        }
+
+        val options = AppSettings.resolutionOptions
+        val labels = options.map { it.label }.toTypedArray()
+        val checkedIndex = AppSettings.getResolutionIndex(requireContext())
+
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle("默认录制分辨率")
+            .setSingleChoiceItems(labels, checkedIndex) { dialog, which ->
+                val selected = options[which]
+                AppSettings.setResolution(requireContext(), selected)
+                startCamera()
+                Snackbar.make(binding.root, "已设置为 ${selected.label}", Snackbar.LENGTH_SHORT).show()
+                dialog.dismiss()
+            }
+            .setNegativeButton("取消", null)
+            .show()
+    }
+
+    private fun showStoragePathDialog(storagePath: String) {
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle("视频保存位置")
+            .setMessage("当前视频会保存到：\n\n$storagePath")
+            .setPositiveButton("知道了", null)
+            .show()
+    }
+
+    private fun getVideoStoragePath(): String {
+        return File(
+            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MOVIES),
+            "Talky"
+        ).absolutePath
     }
 
     private fun observeState() {
@@ -289,6 +352,8 @@ class RecordingFragment : Fragment() {
 
         try {
             isStartingRecording = true
+            shouldSaveCurrentRecording = true
+            finishAfterFinalize = false
             elapsedSeconds = 0
             updateTimerDisplay()
             binding.pauseButton.isEnabled = false
@@ -300,6 +365,12 @@ class RecordingFragment : Fragment() {
                 .prepareRecording(requireContext(), mediaStoreOutputOptions)
                 .withAudioEnabled()
                 .start(ContextCompat.getMainExecutor(requireContext())) { event ->
+                    if (_binding == null) {
+                        if (event is VideoRecordEvent.Finalize && (!shouldSaveCurrentRecording || event.hasError())) {
+                            cleanupFailedRecording(event.outputResults.outputUri)
+                        }
+                        return@start
+                    }
                     when (event) {
                         is VideoRecordEvent.Start -> {
                             handler.post(timerRunnable)
@@ -333,54 +404,43 @@ class RecordingFragment : Fragment() {
                             isStartingRecording = false
                             handler.removeCallbacks(timerRunnable)
                             requireActivity().window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+                            val shouldSave = shouldSaveCurrentRecording
+                            if (!shouldSave) {
+                                cleanupFailedRecording(event.outputResults.outputUri)
+                                resetRecordingUi()
+                                Snackbar.make(binding.root, "录制已取消", Snackbar.LENGTH_SHORT).show()
+                                val shouldFinish = finishAfterFinalize
+                                finishAfterFinalize = false
+                                if (shouldFinish) {
+                                    requireActivity().finish()
+                                }
+                                return@start
+                            }
                             if (event.hasError()) {
                                 cleanupFailedRecording(event.outputResults.outputUri)
                                 val fullMsg = buildFinalizeErrorMessage(event)
                                 Snackbar.make(binding.root, fullMsg, Snackbar.LENGTH_LONG).show()
-                                isRecording = false
-                                isRecordingStarted = false
-                                isPaused = false
-                                recording = null
-                                elapsedSeconds = 0
-                                updateTimerDisplay()
-                                binding.pauseButton.isEnabled = true
-                                binding.pauseButton.text = "开始"
-                                binding.stopButton.isEnabled = false
+                                resetRecordingUi()
                             } else {
                                 val outputUri = event.outputResults.outputUri
                                 if (outputUri == android.net.Uri.EMPTY || outputUri.toString().isBlank()) {
                                     Snackbar.make(binding.root, "录制完成了，但没有拿到有效的视频地址", Snackbar.LENGTH_LONG).show()
-                                    isRecording = false
-                                    isRecordingStarted = false
-                                    isPaused = false
-                                    recording = null
-                                    elapsedSeconds = 0
-                                    updateTimerDisplay()
-                                    binding.pauseButton.isEnabled = true
-                                    binding.pauseButton.text = "开始"
-                                    binding.stopButton.isEnabled = false
+                                    resetRecordingUi()
                                     return@start
                                 }
+                                val durationSeconds = elapsedSeconds
                                 val thumbnailPath = VideoThumbnailLoader.generateThumbnailFile(
                                     requireContext(),
                                     outputUri.toString()
                                 )
                                 viewModel.savePractice(
                                     title = name.removeSuffix(".mp4"),
-                                    durationSeconds = elapsedSeconds,
+                                    durationSeconds = durationSeconds,
                                     resolution = AppSettings.getResolution(requireContext()).recordingLabel,
                                     filePath = outputUri.toString(),
                                     thumbnailPath = thumbnailPath
                                 )
-                                isRecording = false
-                                isRecordingStarted = false
-                                isPaused = false
-                                recording = null
-                                elapsedSeconds = 0
-                                updateTimerDisplay()
-                                binding.pauseButton.isEnabled = true
-                                binding.pauseButton.text = "开始"
-                                binding.stopButton.isEnabled = false
+                                resetRecordingUi()
                             }
                         }
                     }
@@ -433,22 +493,18 @@ class RecordingFragment : Fragment() {
         }
 
         try {
+            shouldSaveCurrentRecording = save
+            finishAfterFinalize = !save
             binding.pauseButton.isEnabled = false
             binding.stopButton.isEnabled = false
-            if (save) {
-                binding.pauseButton.text = "保存中..."
-            }
+            binding.pauseButton.text = if (save) "保存中..." else "取消中..."
             rec.stop()
             recording = null
             handler.removeCallbacks(timerRunnable)
             requireActivity().window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
             isRecording = false
-
-            if (!save) {
-                Snackbar.make(binding.root, "录制已取消", Snackbar.LENGTH_SHORT).show()
-                requireActivity().finish()
-            }
-            // If save=true, wait for VideoRecordEvent.Finalize callback
+            isPaused = false
+            // Wait for VideoRecordEvent.Finalize so CameraX can return or clean the output Uri.
         } catch (e: Exception) {
             Log.e(TAG, "stopRecording failed", e)
             Snackbar.make(binding.root, "停止录制失败：${e.message}", Snackbar.LENGTH_SHORT).show()
@@ -488,11 +544,32 @@ class RecordingFragment : Fragment() {
     private fun updateTimerDisplay() {
         val minutes = elapsedSeconds / 60
         val seconds = elapsedSeconds % 60
-        binding.recIndicator.text = String.format("REC %02d:%02d", minutes, seconds)
+        binding.recIndicator.text = String.format(Locale.getDefault(), "REC %02d:%02d", minutes, seconds)
+    }
+
+    private fun resetRecordingUi() {
+        isRecording = false
+        isRecordingStarted = false
+        isPaused = false
+        recording = null
+        elapsedSeconds = 0
+        updateTimerDisplay()
+        binding.pauseButton.isEnabled = true
+        binding.pauseButton.text = "开始"
+        binding.stopButton.isEnabled = false
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
+        recording?.let { activeRecording ->
+            shouldSaveCurrentRecording = false
+            finishAfterFinalize = false
+            runCatching { activeRecording.stop() }
+            recording = null
+        }
+        isRecording = false
+        isRecordingStarted = false
+        isPaused = false
         handler.removeCallbacks(timerRunnable)
         cameraExecutor.shutdown()
         requireActivity().window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
