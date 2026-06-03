@@ -7,7 +7,9 @@ import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import com.lixiangyang.talky.R
+import com.lixiangyang.talky.core.AuthManager
 import com.lixiangyang.talky.databinding.FragmentHomeBinding
+import com.lixiangyang.talky.ui.auth.LoginActivity
 import com.lixiangyang.talky.ui.common.container
 import com.lixiangyang.talky.ui.history.HistoryActivity
 import com.lixiangyang.talky.ui.recording.RecordingActivity
@@ -42,7 +44,12 @@ class HomeFragment : Fragment() {
         }
 
         binding.startRecordingButton.setOnClickListener {
-            startActivity(RecordingActivity.createIntent(requireContext()))
+            val context = requireContext()
+            if (AuthManager(context).isLoggedIn) {
+                startActivity(RecordingActivity.createIntent(context))
+            } else {
+                startActivity(LoginActivity.createIntent(context, openRecordingAfterLogin = true))
+            }
         }
 
         binding.historyCard.setOnClickListener {

@@ -24,6 +24,12 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Talky">
         <activity
+            android:name=".ui.auth.RegisterActivity"
+            android:theme="@style/Theme.Talky" />
+        <activity
+            android:name=".ui.auth.LoginActivity"
+            android:theme="@style/Theme.Talky" />
+        <activity
             android:name=".ui.video.VideoPlayerActivity"
             android:theme="@style/Theme.Talky" />
         <activity

@@ -13,6 +13,7 @@ import androidx.fragment.app.Fragment
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
 import com.lixiangyang.talky.R
+import com.lixiangyang.talky.core.AuthManager
 import com.lixiangyang.talky.core.AppSettings
 import com.lixiangyang.talky.databinding.FragmentSettingsBinding
 import com.lixiangyang.talky.ui.common.VideoThumbnailLoader
@@ -21,6 +22,7 @@ import java.io.File
 class SettingsFragment : Fragment() {
     private var _binding: FragmentSettingsBinding? = null
     private val binding get() = _binding!!
+    private lateinit var authManager: AuthManager
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -33,6 +35,7 @@ class SettingsFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        authManager = AuthManager(requireContext())
 
         // 设置项点击
         binding.settingResolution.root.setOnClickListener {
@@ -59,6 +62,10 @@ class SettingsFragment : Fragment() {
             showAboutDialog()
         }
 
+        binding.logoutButton.setOnClickListener {
+            showLogoutDialog()
+        }
+
         // 设置默认值
         binding.settingResolution.title.text = getString(R.string.settings_resolution)
         binding.settingResolution.subtitle.text = AppSettings.getResolution(requireContext()).label
@@ -77,6 +84,31 @@ class SettingsFragment : Fragment() {
 
         binding.settingAbout.title.text = getString(R.string.settings_about)
         binding.settingAbout.subtitle.text = "轻量设置，保持界面简单"
+
+        updateLogoutButton()
+    }
+
+    private fun updateLogoutButton() {
+        if (authManager.isLoggedIn) {
+            binding.logoutButton.isEnabled = true
+            binding.logoutButton.text = "退出登录"
+        } else {
+            binding.logoutButton.isEnabled = false
+            binding.logoutButton.text = "当前未登录"
+        }
+    }
+
+    private fun showLogoutDialog() {
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle("退出登录")
+            .setMessage("退出后，再点击开始录制需要重新登录。")
+            .setPositiveButton("退出") { _, _ ->
+                authManager.logout()
+                updateLogoutButton()
+                Snackbar.make(binding.root, "已退出登录", Snackbar.LENGTH_SHORT).show()
+            }
+            .setNegativeButton("取消", null)
+            .show()
     }
 
     private fun showResolutionDialog() {
