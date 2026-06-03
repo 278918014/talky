@@ -80,6 +80,16 @@ class TalkyRepository(
         return videoPracticeDao.insert(entity)
     }
 
+    suspend fun deletePractice(id: Long) {
+        videoPracticeDao.deleteById(id)
+    }
+
+    suspend fun deletePractices(ids: List<Long>) {
+        if (ids.isNotEmpty()) {
+            videoPracticeDao.deleteByIds(ids)
+        }
+    }
+
     suspend fun ensureSeedData() {
         val hasScripts = observeScripts().first().isNotEmpty()
         val hasVideos = observePractices().first().isNotEmpty()

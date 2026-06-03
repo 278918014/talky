@@ -25,6 +25,8 @@ class HistoryViewModel(
     val selectedDate: LiveData<Long?> = _selectedDate
 
     private val dateFilterFlow = MutableStateFlow<Long?>(null)
+    private val filterModeFlow = MutableStateFlow(HistoryFilter.RECENT)
+    val selectedFilter: LiveData<HistoryFilter> = filterModeFlow.asLiveData()
 
     val practices = repository.observePractices().asLiveData()
 
@@ -48,14 +50,30 @@ class HistoryViewModel(
     val groupedPractices: LiveData<List<Pair<String, List<VideoPractice>>>> =
         combine(
             repository.observePractices(),
-            dateFilterFlow
-        ) { practices, dateFilter ->
-            val filtered = if (dateFilter != null) {
-                val dayStart = getDayStart(dateFilter)
-                val dayEnd = dayStart + 24 * 60 * 60 * 1000
-                practices.filter { it.recordedAt >= dayStart && it.recordedAt < dayEnd }
-            } else {
-                practices
+            dateFilterFlow,
+            filterModeFlow
+        ) { practices, dateFilter, filterMode ->
+            val filtered = when (filterMode) {
+                HistoryFilter.DATE -> {
+                    val dayStart = getDayStart(dateFilter ?: System.currentTimeMillis())
+                    val dayEnd = dayStart + 24 * 60 * 60 * 1000
+                    practices.filter { it.recordedAt >= dayStart && it.recordedAt < dayEnd }
+                }
+                HistoryFilter.WEEK -> {
+                    val weekStart = getWeekStart(System.currentTimeMillis())
+                    practices.filter { it.recordedAt >= weekStart }
+                }
+                HistoryFilter.MONTH -> {
+                    val monthStart = getMonthStart(System.currentTimeMillis())
+                    practices.filter { it.recordedAt >= monthStart }
+                }
+                HistoryFilter.LONGEST,
+                HistoryFilter.RECENT -> practices
+            }
+
+            if (filterMode == HistoryFilter.LONGEST) {
+                return@combine listOf("最长练习" to filtered.sortedByDescending { it.durationSeconds })
+                    .filter { it.second.isNotEmpty() }
             }
 
             // Group by date
@@ -72,16 +90,63 @@ class HistoryViewModel(
     fun setDateFilter(dateMillis: Long) {
         _selectedDate.value = dateMillis
         dateFilterFlow.value = dateMillis
+        filterModeFlow.value = HistoryFilter.DATE
     }
 
     fun clearDateFilter() {
+        resetFilters()
+    }
+
+    fun resetFilters() {
         _selectedDate.value = null
         dateFilterFlow.value = null
+        filterModeFlow.value = HistoryFilter.RECENT
+    }
+
+    fun setQuickFilter(filter: HistoryFilter) {
+        _selectedDate.value = null
+        dateFilterFlow.value = null
+        filterModeFlow.value = filter
+    }
+
+    fun deletePractice(id: Long) {
+        viewModelScope.launch {
+            repository.deletePractice(id)
+        }
+    }
+
+    fun deletePractices(ids: List<Long>) {
+        viewModelScope.launch {
+            repository.deletePractices(ids)
+        }
     }
 
     private fun getDayStart(millis: Long): Long {
         return Calendar.getInstance().apply {
             timeInMillis = millis
+            set(Calendar.HOUR_OF_DAY, 0)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }.timeInMillis
+    }
+
+    private fun getWeekStart(millis: Long): Long {
+        return Calendar.getInstance().apply {
+            timeInMillis = millis
+            firstDayOfWeek = Calendar.MONDAY
+            set(Calendar.DAY_OF_WEEK, Calendar.MONDAY)
+            set(Calendar.HOUR_OF_DAY, 0)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }.timeInMillis
+    }
+
+    private fun getMonthStart(millis: Long): Long {
+        return Calendar.getInstance().apply {
+            timeInMillis = millis
+            set(Calendar.DAY_OF_MONTH, 1)
             set(Calendar.HOUR_OF_DAY, 0)
             set(Calendar.MINUTE, 0)
             set(Calendar.SECOND, 0)
@@ -112,4 +177,12 @@ class HistoryViewModel(
         val label: String,
         val count: Int
     )
+
+    enum class HistoryFilter {
+        RECENT,
+        WEEK,
+        MONTH,
+        LONGEST,
+        DATE
+    }
 }

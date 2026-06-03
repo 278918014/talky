@@ -1,11 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
-<TextView xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/date_label"
-    style="@style/TalkyBody.Small"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:paddingVertical="8dp"
-    android:textColor="@color/talky_subtext"
-    android:textStyle="bold"
-    tools:text="2026年04月16日" />
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:paddingTop="12dp"
+    android:paddingBottom="8dp">
+
+    <TextView
+        android:id="@+id/date_label"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:textColor="@color/talky_text"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        tools:text="2026年06月03日" />
+
+    <TextView
+        android:id="@+id/date_count"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="@color/talky_subtext"
+        android:textSize="14sp"
+        tools:text="1 条" />
+</LinearLayout>

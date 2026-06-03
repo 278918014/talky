@@ -16,21 +16,22 @@ import java.util.Locale
  * 包含日期头和视频卡片两种 item 类型
  */
 class HistoryAdapter(
-    private val onVideoClick: (VideoPractice) -> Unit
+    private val onVideoClick: (VideoPractice) -> Unit,
+    private val onDeleteClick: (VideoPractice) -> Unit
 ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
     // 扁平化的列表，包含日期头和视频项
     private var items: List<ListItem> = emptyList()
 
     sealed class ListItem {
-        data class DateHeader(val dateLabel: String) : ListItem()
+        data class DateHeader(val dateLabel: String, val count: Int) : ListItem()
         data class VideoItem(val practice: VideoPractice) : ListItem()
     }
 
     fun submitGrouped(grouped: List<Pair<String, List<VideoPractice>>>) {
         val newItems = mutableListOf<ListItem>()
         for ((dateLabel, videos) in grouped) {
-            newItems.add(ListItem.DateHeader(dateLabel))
+            newItems.add(ListItem.DateHeader(dateLabel, videos.size))
             videos.forEach { newItems.add(ListItem.VideoItem(it)) }
         }
         items = newItems
@@ -65,7 +66,7 @@ class HistoryAdapter(
 
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
         when (val item = items[position]) {
-            is ListItem.DateHeader -> (holder as DateHeaderViewHolder).bind(item.dateLabel)
+            is ListItem.DateHeader -> (holder as DateHeaderViewHolder).bind(item.dateLabel, item.count)
             is ListItem.VideoItem -> (holder as VideoViewHolder).bind(item.practice)
         }
     }
@@ -73,8 +74,9 @@ class HistoryAdapter(
     inner class DateHeaderViewHolder(
         private val binding: ItemDateHeaderBinding
     ) : RecyclerView.ViewHolder(binding.root) {
-        fun bind(dateLabel: String) {
+        fun bind(dateLabel: String, count: Int) {
             binding.dateLabel.text = dateLabel
+            binding.dateCount.text = "${count} 条"
         }
     }
 
@@ -85,12 +87,14 @@ class HistoryAdapter(
             val timeFormatter = SimpleDateFormat("HH:mm", Locale.getDefault())
             binding.title.text = "${timeFormatter.format(Date(practice.recordedAt))} 录制"
             binding.meta.text = "${practice.durationSeconds}秒 · ${practice.resolution}"
+            binding.duration.text = "${practice.durationSeconds}秒"
             VideoThumbnailLoader.loadInto(
                 imageView = binding.thumbnail,
                 videoPath = practice.filePath,
                 thumbnailPath = practice.thumbnailPath
             )
             binding.root.setOnClickListener { onVideoClick(practice) }
+            binding.deleteButton.setOnClickListener { onDeleteClick(practice) }
         }
     }
 

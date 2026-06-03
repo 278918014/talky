@@ -23,4 +23,10 @@ interface VideoPracticeDao {
 
     @Query("SELECT COUNT(*) FROM video_practices")
     suspend fun count(): Int
+
+    @Query("DELETE FROM video_practices WHERE id = :id")
+    suspend fun deleteById(id: Long)
+
+    @Query("DELETE FROM video_practices WHERE id IN (:ids)")
+    suspend fun deleteByIds(ids: List<Long>)
 }

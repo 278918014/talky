@@ -1,52 +1,125 @@
 <?xml version="1.0" encoding="utf-8"?>
 <com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
+    android:layout_height="106dp"
     android:layout_marginBottom="12dp"
     app:cardBackgroundColor="@color/talky_surface"
-    app:cardCornerRadius="22dp"
+    app:cardCornerRadius="10dp"
     app:cardElevation="0dp"
     app:strokeColor="@color/talky_border"
     app:strokeWidth="1dp">
 
-    <LinearLayout
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:padding="14dp">
+        android:layout_height="match_parent"
+        android:paddingStart="16dp"
+        android:paddingTop="14dp"
+        android:paddingEnd="16dp"
+        android:paddingBottom="14dp">
 
-        <ImageView
-            android:id="@+id/thumbnail"
-            android:layout_width="88dp"
-            android:layout_height="64dp"
+        <View
+            android:id="@+id/selected_rail"
+            android:layout_width="4dp"
+            android:layout_height="70dp"
+            android:background="@drawable/bg_selected_rail"
+            android:visibility="gone"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <FrameLayout
+            android:id="@+id/thumbnail_container"
+            android:layout_width="58dp"
+            android:layout_height="76dp"
+            android:layout_marginStart="12dp"
             android:background="@drawable/bg_video_thumb"
             android:clipToOutline="true"
-            android:contentDescription="视频封面"
-            android:scaleType="centerCrop" />
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
 
-        <LinearLayout
+            <ImageView
+                android:id="@+id/thumbnail"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:contentDescription="视频封面"
+                android:scaleType="centerCrop" />
+
+            <FrameLayout
+                android:layout_width="28dp"
+                android:layout_height="28dp"
+                android:layout_gravity="center"
+                android:background="@drawable/bg_play_overlay">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:gravity="center"
+                    android:includeFontPadding="false"
+                    android:text="▶"
+                    android:textColor="@color/talky_primary"
+                    android:textSize="13sp"
+                    android:textStyle="bold" />
+            </FrameLayout>
+        </FrameLayout>
+
+        <TextView
+            android:id="@+id/title"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_gravity="center_vertical"
-            android:layout_marginStart="12dp"
-            android:layout_weight="1"
-            android:orientation="vertical">
+            android:layout_marginStart="18dp"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:textColor="@color/talky_text"
+            android:textSize="21sp"
+            android:textStyle="bold"
+            app:layout_constraintBottom_toTopOf="@id/meta"
+            app:layout_constraintEnd_toStartOf="@id/duration"
+            app:layout_constraintStart_toEndOf="@id/thumbnail_container"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintVertical_chainStyle="packed"
+            tools:text="11:12 录制" />
 
-            <TextView
-                android:id="@+id/title"
-                style="@style/TalkySectionTitle"
-                android:ellipsize="end"
-                android:maxLines="1"
-                android:text="16:13 录制"
-                android:textSize="16sp" />
+        <TextView
+            android:id="@+id/meta"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="5dp"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:textColor="@color/talky_subtext"
+            android:textSize="14sp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@id/duration"
+            app:layout_constraintStart_toStartOf="@id/title"
+            app:layout_constraintTop_toBottomOf="@id/title"
+            tools:text="7秒 · 1080P" />
 
-            <TextView
-                android:id="@+id/meta"
-                style="@style/TalkyBody.Small"
-                android:layout_marginTop="6dp"
-                android:text="6秒 · 720P" />
-        </LinearLayout>
-    </LinearLayout>
+        <TextView
+            android:id="@+id/duration"
+            android:layout_width="48dp"
+            android:layout_height="30dp"
+            android:background="@drawable/bg_duration_pill"
+            android:gravity="center"
+            android:textColor="@color/talky_recording_dark"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            tools:text="7秒" />
 
+        <TextView
+            android:id="@+id/delete_button"
+            android:layout_width="48dp"
+            android:layout_height="28dp"
+            android:gravity="center"
+            android:text="删除"
+            android:textColor="@color/talky_coral"
+            android:textSize="12sp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/duration" />
+    </androidx.constraintlayout.widget.ConstraintLayout>
 </com.google.android.material.card.MaterialCardView>

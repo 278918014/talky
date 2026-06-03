@@ -1,5 +1,6 @@
 package com.lixiangyang.talky.ui.history
 
+import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -11,12 +12,18 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.lixiangyang.talky.R
 import com.lixiangyang.talky.databinding.FragmentHistoryBinding
+import com.lixiangyang.talky.domain.model.VideoPractice
 import com.lixiangyang.talky.ui.common.container
 import com.lixiangyang.talky.ui.video.VideoPlayerActivity
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.io.File
 import java.util.Calendar
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -34,13 +41,19 @@ class HistoryFragment : Fragment() {
         HistoryViewModel.factory(container().repository)
     }
 
-    private val adapter = HistoryAdapter { item ->
-        startActivity(VideoPlayerActivity.createIntent(requireContext(), item.id))
-    }
+    private val adapter = HistoryAdapter(
+        onVideoClick = { item ->
+            startActivity(VideoPlayerActivity.createIntent(requireContext(), item.id))
+        },
+        onDeleteClick = { item ->
+            confirmDeletePractice(item)
+        }
+    )
 
     private val dateFormatter = SimpleDateFormat("yyyy年MM月dd日", Locale.getDefault())
     private val monthFormatter = SimpleDateFormat("yyyy年MM月", Locale.getDefault())
     private var availableDateOptions: List<HistoryViewModel.DateFilterOption> = emptyList()
+    private var visiblePractices: List<VideoPractice> = emptyList()
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -63,20 +76,40 @@ class HistoryFragment : Fragment() {
             showDatePicker()
         }
 
+        binding.dateFilterText.setOnClickListener {
+            resetHistoryFilters()
+        }
+
+        binding.weekFilter.setOnClickListener {
+            viewModel.setQuickFilter(HistoryViewModel.HistoryFilter.WEEK)
+            scrollListToTop()
+        }
+
+        binding.monthFilter.setOnClickListener {
+            viewModel.setQuickFilter(HistoryViewModel.HistoryFilter.MONTH)
+            scrollListToTop()
+        }
+
+        binding.longestFilter.setOnClickListener {
+            viewModel.setQuickFilter(HistoryViewModel.HistoryFilter.LONGEST)
+            scrollListToTop()
+        }
+
         binding.clearFilter.setOnClickListener {
-            viewModel.clearDateFilter()
-            binding.dateFilterText.text = "最近录制"
-            binding.clearFilter.visibility = View.GONE
+            confirmDeleteVisiblePractices()
         }
 
         viewModel.groupedPractices.observe(viewLifecycleOwner) { grouped ->
+            visiblePractices = grouped.flatMap { it.second }
             if (grouped.isEmpty()) {
                 binding.emptyState.visibility = View.VISIBLE
                 binding.recyclerView.visibility = View.GONE
+                binding.clearFilter.visibility = View.GONE
             } else {
                 binding.emptyState.visibility = View.GONE
                 binding.recyclerView.visibility = View.VISIBLE
                 adapter.submitGrouped(grouped)
+                binding.clearFilter.visibility = View.VISIBLE
             }
         }
 
@@ -84,15 +117,145 @@ class HistoryFragment : Fragment() {
             if (date != null) {
                 binding.dateFilterText.text = dateFormatter.format(Date(date))
                 binding.clearFilter.visibility = View.VISIBLE
-            } else {
-                binding.dateFilterText.text = "最近录制"
-                binding.clearFilter.visibility = View.GONE
             }
+        }
+
+        viewModel.selectedFilter.observe(viewLifecycleOwner) { filter ->
+            updateFilterUi(filter, viewModel.selectedDate.value)
         }
 
         viewModel.availableDateOptions.observe(viewLifecycleOwner) { options ->
             availableDateOptions = options
         }
+
+        viewModel.practices.observe(viewLifecycleOwner) { practices ->
+            updateSummary(practices)
+        }
+    }
+
+    private fun resetHistoryFilters() {
+        viewModel.resetFilters()
+        scrollListToTop()
+        binding.filterScroll.post {
+            binding.filterScroll.smoothScrollTo(0, 0)
+        }
+    }
+
+    private fun scrollListToTop() {
+        binding.recyclerView.post {
+            if (adapter.itemCount > 0) {
+                binding.recyclerView.scrollToPosition(0)
+            }
+        }
+    }
+
+    private fun updateFilterUi(filter: HistoryViewModel.HistoryFilter, selectedDate: Long?) {
+        val activeText = resources.getColor(R.color.talky_surface, null)
+        val inactiveText = resources.getColor(R.color.talky_subtext, null)
+
+        fun TextView.setActive(active: Boolean) {
+            setBackgroundResource(
+                if (active) R.drawable.bg_history_filter_active else R.drawable.bg_history_filter
+            )
+            setTextColor(if (active) activeText else inactiveText)
+        }
+
+        binding.dateFilterText.text = when (filter) {
+            HistoryViewModel.HistoryFilter.DATE -> selectedDate?.let { dateFormatter.format(Date(it)) } ?: "选择日期"
+            else -> "最近录制"
+        }
+        binding.clearFilter.visibility = if (visiblePractices.isEmpty()) View.GONE else View.VISIBLE
+
+        binding.dateFilterText.setActive(filter == HistoryViewModel.HistoryFilter.RECENT || filter == HistoryViewModel.HistoryFilter.DATE)
+        binding.weekFilter.setActive(filter == HistoryViewModel.HistoryFilter.WEEK)
+        binding.monthFilter.setActive(filter == HistoryViewModel.HistoryFilter.MONTH)
+        binding.longestFilter.setActive(filter == HistoryViewModel.HistoryFilter.LONGEST)
+    }
+
+    private fun confirmDeletePractice(practice: VideoPractice) {
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle("删除这条练习？")
+            .setMessage("会同时删除这条历史记录和对应的视频文件，删除后不能恢复。")
+            .setNegativeButton("取消", null)
+            .setPositiveButton("删除") { _, _ ->
+                deletePractices(listOf(practice))
+            }
+            .show()
+    }
+
+    private fun confirmDeleteVisiblePractices() {
+        val targets = visiblePractices
+        if (targets.isEmpty()) {
+            Toast.makeText(requireContext(), "当前没有可删除的练习", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle("删除当前列表全部练习？")
+            .setMessage("将删除当前页面显示的 ${targets.size} 条历史记录和对应视频文件，删除后不能恢复。")
+            .setNegativeButton("取消", null)
+            .setPositiveButton("全部删除") { _, _ ->
+                deletePractices(targets)
+            }
+            .show()
+    }
+
+    private fun deletePractices(practices: List<VideoPractice>) {
+        val appContext = requireContext().applicationContext
+        lifecycleScope.launch {
+            withContext(Dispatchers.IO) {
+                practices.forEach { practice ->
+                    deleteStoredFile(appContext.contentResolver, practice.filePath)
+                    deleteStoredFile(appContext.contentResolver, practice.thumbnailPath)
+                }
+            }
+            viewModel.deletePractices(practices.map { it.id })
+            Toast.makeText(requireContext(), "已删除 ${practices.size} 条练习", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun deleteStoredFile(contentResolver: android.content.ContentResolver, path: String) {
+        if (path.isBlank()) return
+        runCatching {
+            when {
+                path.startsWith("content://") -> contentResolver.delete(Uri.parse(path), null, null)
+                path.startsWith("file://") -> File(Uri.parse(path).path.orEmpty()).delete()
+                else -> File(path).delete()
+            }
+        }
+    }
+
+    private fun updateSummary(practices: List<com.lixiangyang.talky.domain.model.VideoPractice>) {
+        val now = System.currentTimeMillis()
+        val todayStart = dayStart(now)
+        val weekStart = Calendar.getInstance().apply {
+            timeInMillis = now
+            firstDayOfWeek = Calendar.MONDAY
+            set(Calendar.DAY_OF_WEEK, Calendar.MONDAY)
+            set(Calendar.HOUR_OF_DAY, 0)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }.timeInMillis
+
+        val todayCount = practices.count { it.recordedAt >= todayStart }
+        val weekCount = practices.count { it.recordedAt >= weekStart }
+        val totalMinutes = practices.sumOf { it.durationSeconds } / 60
+
+        binding.summaryTotal.text = "${practices.size} 条练习"
+        binding.summaryMeta.text = "累计 ${totalMinutes} 分钟，保持稳定输出"
+        binding.todayCount.text = todayCount.toString()
+        binding.weekCount.text = weekCount.toString()
+    }
+
+    private fun dayStart(millis: Long): Long {
+        return Calendar.getInstance().apply {
+            timeInMillis = millis
+            set(Calendar.HOUR_OF_DAY, 0)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }.timeInMillis
     }
 
     private fun showDatePicker() {

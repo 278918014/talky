@@ -1,13 +1,15 @@
 package com.lixiangyang.talky.ui.recording
 
 import android.Manifest
-import android.content.ContentValues
+import android.content.ActivityNotFoundException
+import android.content.Intent
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Environment
 import android.os.Handler
 import android.os.Looper
-import android.provider.MediaStore
+import android.provider.Settings
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -17,8 +19,8 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
-import androidx.camera.video.MediaStoreOutputOptions
 import androidx.camera.video.FallbackStrategy
+import androidx.camera.video.FileOutputOptions
 import androidx.camera.video.Quality
 import androidx.camera.video.QualitySelector
 import androidx.camera.video.Recorder
@@ -115,7 +117,7 @@ class RecordingFragment : Fragment() {
             Manifest.permission.CAMERA,
             Manifest.permission.RECORD_AUDIO
         )
-        if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.P) {
+        if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.Q) {
             permissions.add(Manifest.permission.WRITE_EXTERNAL_STORAGE)
         }
 
@@ -225,10 +227,11 @@ class RecordingFragment : Fragment() {
     }
 
     private fun getVideoStoragePath(): String {
-        return File(
-            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MOVIES),
-            "Talky"
-        ).absolutePath
+        return getVideoStorageDirectory().absolutePath
+    }
+
+    private fun getVideoStorageDirectory(): File {
+        return File(Environment.getExternalStorageDirectory(), "Talky")
     }
 
     private fun observeState() {
@@ -247,7 +250,7 @@ class RecordingFragment : Fragment() {
             Manifest.permission.CAMERA,
             Manifest.permission.RECORD_AUDIO
         )
-        if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.P) {
+        if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.Q) {
             permissions.add(Manifest.permission.WRITE_EXTERNAL_STORAGE)
         }
 
@@ -256,6 +259,10 @@ class RecordingFragment : Fragment() {
         }
 
         if (allGranted) {
+            if (!hasRootStorageAccess()) {
+                showRootStorageAccessDialog()
+                return
+            }
             // 如果相机还没准备好，先初始化相机，相机就绪后再开始录制
             if (!isCameraReady) {
                 startCamera { startRecording() }
@@ -336,19 +343,20 @@ class RecordingFragment : Fragment() {
             return
         }
 
-        val name = "Talky_${SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(System.currentTimeMillis())}.mp4"
-        val contentValues = ContentValues().apply {
-            put(MediaStore.MediaColumns.DISPLAY_NAME, name)
-            put(MediaStore.MediaColumns.MIME_TYPE, "video/mp4")
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                put(MediaStore.Video.Media.RELATIVE_PATH, "Movies/Talky")
-            }
+        if (!hasRootStorageAccess()) {
+            showRootStorageAccessDialog()
+            return
         }
 
-        val mediaStoreOutputOptions = MediaStoreOutputOptions.Builder(
-            requireContext().contentResolver,
-            MediaStore.Video.Media.EXTERNAL_CONTENT_URI
-        ).setContentValues(contentValues).build()
+        val name = "Talky_${SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(System.currentTimeMillis())}.mp4"
+        val storageDir = getVideoStorageDirectory()
+        if (!storageDir.exists() && !storageDir.mkdirs()) {
+            Snackbar.make(binding.root, "无法创建保存目录：${storageDir.absolutePath}", Snackbar.LENGTH_LONG).show()
+            return
+        }
+        val outputFile = File(storageDir, name)
+
+        val fileOutputOptions = FileOutputOptions.Builder(outputFile).build()
 
         try {
             isStartingRecording = true
@@ -362,7 +370,7 @@ class RecordingFragment : Fragment() {
             requireActivity().window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 
             recording = videoCapture.output
-                .prepareRecording(requireContext(), mediaStoreOutputOptions)
+                .prepareRecording(requireContext(), fileOutputOptions)
                 .withAudioEnabled()
                 .start(ContextCompat.getMainExecutor(requireContext())) { event ->
                     if (_binding == null) {
@@ -437,7 +445,7 @@ class RecordingFragment : Fragment() {
                                     title = name.removeSuffix(".mp4"),
                                     durationSeconds = durationSeconds,
                                     resolution = AppSettings.getResolution(requireContext()).recordingLabel,
-                                    filePath = outputUri.toString(),
+                                    filePath = outputFile.absolutePath,
                                     thumbnailPath = thumbnailPath
                                 )
                                 resetRecordingUi()
@@ -535,9 +543,47 @@ class RecordingFragment : Fragment() {
     private fun cleanupFailedRecording(outputUri: android.net.Uri?) {
         if (outputUri == null || outputUri == android.net.Uri.EMPTY) return
         runCatching {
-            requireContext().contentResolver.delete(outputUri, null, null)
+            if (outputUri.scheme == "file") {
+                outputUri.path?.let { File(it).delete() }
+            } else {
+                requireContext().contentResolver.delete(outputUri, null, null)
+            }
         }.onFailure { error ->
             Log.w(TAG, "cleanupFailedRecording failed for uri=$outputUri", error)
+        }
+    }
+
+    private fun hasRootStorageAccess(): Boolean {
+        return Build.VERSION.SDK_INT < Build.VERSION_CODES.R || Environment.isExternalStorageManager()
+    }
+
+    private fun showRootStorageAccessDialog() {
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle("需要文件访问权限")
+            .setMessage("视频将保存到手机根目录的 Talky 文件夹。请在系统设置里允许 Talky 访问所有文件。")
+            .setPositiveButton("去设置") { _, _ -> openAllFilesAccessSettings() }
+            .setNegativeButton("取消", null)
+            .show()
+    }
+
+    private fun openAllFilesAccessSettings() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) return
+        val packageUri = Uri.parse("package:${requireContext().packageName}")
+        val appIntent = Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION, packageUri)
+        val opened = startIntentSafely(appIntent)
+        if (!opened) {
+            startIntentSafely(Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION))
+        }
+    }
+
+    private fun startIntentSafely(intent: Intent): Boolean {
+        return try {
+            startActivity(intent)
+            true
+        } catch (_: ActivityNotFoundException) {
+            false
+        } catch (_: SecurityException) {
+            false
         }
     }
 

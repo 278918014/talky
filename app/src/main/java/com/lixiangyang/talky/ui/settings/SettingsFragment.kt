@@ -122,16 +122,13 @@ class SettingsFragment : Fragment() {
     }
 
     private fun buildStorageLocations(): List<StorageLocation> {
-        val internalPath = File(
-            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MOVIES),
-            "Talky"
-        ).absolutePath
+        val rootTalkyPath = File(Environment.getExternalStorageDirectory(), "Talky").absolutePath
 
         val locations = mutableListOf(
             StorageLocation(
                 title = "内部存储（当前保存位置）",
-                path = internalPath,
-                description = "录制视频会保存在手机共享存储的 Movies/Talky 目录"
+                path = rootTalkyPath,
+                description = "录制视频会保存在手机存储根目录的 Talky 文件夹"
             )
         )
 
