@@ -7,14 +7,14 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.WindowCompat
+import androidx.lifecycle.lifecycleScope
 import com.lixiangyang.talky.core.AuthManager
 import com.lixiangyang.talky.databinding.ActivityRegisterBinding
-import com.lixiangyang.talky.ui.recording.RecordingActivity
+import kotlinx.coroutines.launch
 
 class RegisterActivity : AppCompatActivity() {
     private lateinit var binding: ActivityRegisterBinding
     private lateinit var authManager: AuthManager
-    private var openRecordingAfterLogin: Boolean = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -30,7 +30,6 @@ class RegisterActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         authManager = AuthManager(this)
-        openRecordingAfterLogin = intent.getBooleanExtra(EXTRA_OPEN_RECORDING_AFTER_LOGIN, false)
 
         binding.backButton.setOnClickListener { finish() }
         binding.registerButton.setOnClickListener { register() }
@@ -45,37 +44,33 @@ class RegisterActivity : AppCompatActivity() {
             return
         }
 
-        val result = authManager.register(
-            account = binding.accountInput.text?.toString().orEmpty(),
-            password = password
-        )
+        setLoading(true)
+        lifecycleScope.launch {
+            val result = authManager.register(
+                account = binding.accountInput.text?.toString().orEmpty(),
+                password = password
+            )
+            setLoading(false)
 
-        when (result) {
-            is AuthManager.AuthResult.Success -> {
-                Toast.makeText(this, "注册成功", Toast.LENGTH_SHORT).show()
-                continueAfterAuth()
-            }
-            is AuthManager.AuthResult.Error -> {
-                Toast.makeText(this, result.message, Toast.LENGTH_SHORT).show()
+            when (result) {
+                is AuthManager.AuthResult.Success -> {
+                    Toast.makeText(this@RegisterActivity, "注册成功，请登录", Toast.LENGTH_SHORT).show()
+                    finish()
+                }
+                is AuthManager.AuthResult.Error -> {
+                    Toast.makeText(this@RegisterActivity, result.message, Toast.LENGTH_SHORT).show()
+                }
             }
         }
     }
 
-    private fun continueAfterAuth() {
-        if (openRecordingAfterLogin) {
-            startActivity(RecordingActivity.createIntent(this))
-        }
-        finish()
+    private fun setLoading(isLoading: Boolean) {
+        binding.registerButton.isEnabled = !isLoading
+        binding.loginEntry.isEnabled = !isLoading
+        binding.registerButton.text = if (isLoading) "注册中..." else "注册并登录"
     }
 
     companion object {
-        private const val EXTRA_OPEN_RECORDING_AFTER_LOGIN = "open_recording_after_login"
-
-        fun createIntent(
-            context: Context,
-            openRecordingAfterLogin: Boolean = false
-        ): Intent = Intent(context, RegisterActivity::class.java).apply {
-            putExtra(EXTRA_OPEN_RECORDING_AFTER_LOGIN, openRecordingAfterLogin)
-        }
+        fun createIntent(context: Context): Intent = Intent(context, RegisterActivity::class.java)
     }
 }
